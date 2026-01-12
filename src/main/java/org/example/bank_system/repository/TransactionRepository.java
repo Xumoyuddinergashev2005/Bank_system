@@ -19,8 +19,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Override
     @NonNull
-    @EntityGraph(attributePaths = {"account"} )
-    List<Transaction> findAll(@NonNull Specification<Transaction> spec);
+    @EntityGraph(attributePaths = {"user", "fromAccount", "toAccount"})
+    List<Transaction> findAll(Specification<Transaction> spec);
+
 
     @EntityGraph(attributePaths = {"user"} )
     Optional<Transaction> findByIdAndFromAccount_User_Id(Long transactionId, Long userId);

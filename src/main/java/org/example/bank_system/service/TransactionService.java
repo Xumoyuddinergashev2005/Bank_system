@@ -3,8 +3,10 @@ package org.example.bank_system.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.bank_system.dto.request.TransactionFilterRequest;
 import org.example.bank_system.dto.request.TransferRequest;
 import org.example.bank_system.dto.request.TransferRequestPermission;
+import org.example.bank_system.dto.response.TransactionResponse;
 import org.example.bank_system.dto.response.TransferResponse;
 import org.example.bank_system.entity.account.Account;
 import org.example.bank_system.entity.account.AccountStatus;
@@ -15,15 +17,18 @@ import org.example.bank_system.entity.user.User;
 import org.example.bank_system.exception.BadRequestException;
 import org.example.bank_system.exception.InsufficientBalanceException;
 import org.example.bank_system.exception.NotFoundException;
+import org.example.bank_system.mapper.TransactionMapper;
 import org.example.bank_system.repository.AccountRepository;
 import org.example.bank_system.repository.TransactionRepository;
 import org.example.bank_system.repository.UserRepository;
+import org.example.bank_system.specification.TransactionSpecification;
 import org.example.bank_system.util.NumberGenerator;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -34,7 +39,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final NumberGenerator generator;
-    private final UserRepository userRepository;
+    private final TransactionMapper transactionMapper;
     private final RedisTemplate<String, Long> redisTemplate;
     private static final BigDecimal COMMISSION_RATE = BigDecimal.valueOf(0.02);
     private static final Long BANK_ACCOUNT_NUMBER = 86004499L;
@@ -77,12 +82,16 @@ public class TransactionService {
     }
 
     @Transactional
-    public void completeTransfer(TransferRequestPermission request) {
+    public void completeTransfer(TransferRequestPermission request, User user) {
 
 
         Account fromAccount = accountRepository
                 .findByAccountNumberAndDeletedAtIsNull(request.fromAccountNumber())
                 .orElseThrow(() -> new NotFoundException("From account not found"));
+
+        if (user.getId() != fromAccount.getUser().getId()) {
+            throw new UnsupportedOperationException("You are not allowed to perform this operation because this :" + fromAccount.getAccountNumber() + "  account number is not yours");
+        }
 
         Long cachedCode = redisTemplate.opsForValue().get(fromAccount.getUser().getPhoneNumber());
 
@@ -97,15 +106,15 @@ public class TransactionService {
         }
 
 
-        Account toAccount = accountRepository
-                .findByAccountNumberAndDeletedAtIsNull(request.toAccountNumber())
-                .orElseThrow(() -> new NotFoundException("To account not found"));
+        if (!accountRepository.existsByIdAndDeletedAtIsNull(transaction.getToAccount().getId())) {
+            throw new NotFoundException("To account not found");
+        }
         Account bankAccount = accountRepository.findByAccountNumberAndDeletedAtIsNull(BANK_ACCOUNT_NUMBER)
                 .orElseThrow(() -> new IllegalStateException("Bank account not found"));
 
 
         String from = String.valueOf(fromAccount.getAccountNumber());
-        String to = String.valueOf(toAccount.getAccountNumber());
+        String to = String.valueOf(transaction.getToAccount().getAccountNumber());
 
         if (!from.startsWith("8600") && to.startsWith("8600")) {
             throw new BadRequestException("Only internal transfers are allowed");
@@ -120,8 +129,8 @@ public class TransactionService {
                 fromAccount.getBalance().subtract(transaction.getTotalDebit())
         );
 
-        toAccount.setBalance(
-                toAccount.getBalance().add(transaction.getAmount())
+        transaction.getToAccount().setBalance(
+                transaction.getToAccount().getBalance().add(transaction.getAmount())
         );
 
         bankAccount.setBalance(
@@ -129,7 +138,7 @@ public class TransactionService {
         );
 
         accountRepository.save(fromAccount);
-        accountRepository.save(toAccount);
+        accountRepository.save(transaction.getToAccount());
         accountRepository.save(bankAccount);
 
         transaction.setFromAccount(fromAccount);
@@ -141,8 +150,6 @@ public class TransactionService {
     }
 
 
-
-
     public void deleteTransactionById(Long id) {
         if (!transactionRepository.existsById(id)) {
             throw new NotFoundException("Transaction not found");
@@ -151,5 +158,49 @@ public class TransactionService {
 
     }
 
-}
+
+    /*public List<TransactionResponse> getUserTransactions(TransactionSpecification filter) {
+
+        var specification = TransactionSpecification.filterTransactions(
+                filter.search(),
+                filter.status(),
+                filter.type(),
+                filter.minTotalDebit(),
+                filter.maxTotalDebit(),
+                filter.maxCommission(),
+                filter.minCommission(),
+                filter.fromDate(),
+                filter.toDate(),
+                filter.userId(user.getId())
+        );
+
+
+        List<Transaction> transactions = transactionRepository.findAll(specification);
+        return transactionMapper.toResponseList(transactions);
+    }*/
+
+
+        public List<TransactionResponse> getAllTransactions (TransactionFilterRequest filter){
+
+            var specification = TransactionSpecification.filterTransactions(
+                    filter.search(),
+                    filter.status(),
+                    filter.type(),
+                    filter.minTotalDebit(),
+                    filter.maxTotalDebit(),
+                    filter.maxCommission(),
+                    filter.minCommission(),
+                    filter.fromDate(),
+                    filter.toDate(),
+                    filter.userId()
+
+
+            );
+
+
+            List<Transaction> transactions = transactionRepository.findAll(specification);
+            return transactionMapper.toResponseList(transactions);
+        }
+    }
+
 

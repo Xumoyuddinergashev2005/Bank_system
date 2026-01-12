@@ -70,7 +70,7 @@ public class Transaction {
     private LocalDateTime pendingTime;
 
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "deleted_at")

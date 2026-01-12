@@ -19,7 +19,7 @@ public class GlobalSchedule {
 
 
     @Scheduled(fixedDelay = 20_000, initialDelay = 20_000) // every
-    private void TransactionDeleteSchedular(){
+    public void TransactionDeleteSchedular(){
 
 
         LocalDateTime fiveMinutesAgo = LocalDateTime.now().minusMinutes(5);

@@ -28,4 +28,5 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByAccountNumberAndDeletedAtIsNull(Long accountNumber);
 
+    boolean existsByIdAndDeletedAtIsNull(Long id);
 }

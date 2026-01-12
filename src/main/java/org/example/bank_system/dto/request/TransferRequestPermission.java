@@ -13,9 +13,6 @@ public record TransferRequestPermission(
         @JsonProperty("transaction_id")
         @NotNull(message = "Transaction_Id cannot be null")
         Long transactionId,
-        @JsonProperty("to_account_number")
-        @NotNull(message = "to_account_number cannot be null")
-        Long toAccountNumber,
         @JsonProperty("from_account_number")
         @NotNull(message = "from_account_number cannot be null")
         Long fromAccountNumber,
