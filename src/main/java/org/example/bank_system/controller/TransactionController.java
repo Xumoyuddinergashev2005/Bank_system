@@ -29,7 +29,7 @@ public class TransactionController {
     private final TransactionService transactionService;
 
 
-    @PostMapping("/transferRequest")
+    @PostMapping("/transferPreparing")
     @Operation(summary = "Commission rate is 2 % for each transfer")
     public ResponseEntity<?> transferToMoneyForPermission(@Valid @RequestBody TransferRequest transferRequest,
                                                           @AuthenticationPrincipal User user) {
@@ -38,7 +38,7 @@ public class TransactionController {
     }
 
 
-    @PostMapping("/transferResponse")
+    @PostMapping("/transferConfirm")
     public ResponseEntity<?> completeTransfer(
             @Valid @RequestBody TransferRequestPermission transferRequestPermission,
             @AuthenticationPrincipal User user

@@ -3,6 +3,7 @@ package org.example.bank_system.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.bank_system.dto.request.AccountCreateRequest;
+import org.example.bank_system.dto.response.AccountCreateResponse;
 import org.example.bank_system.dto.response.AccountResponse;
 import org.example.bank_system.entity.account.Account;
 import org.example.bank_system.entity.account.AccountStatus;
@@ -32,7 +33,7 @@ public class AccountService {
     private final AccountMapper  accountMapper;
 
 
-    public void createAccount(AccountCreateRequest request, User user) {
+    public AccountCreateResponse createAccount(AccountCreateRequest request, User user) {
         if (!user.getKycStatus().equals(KycStatus.VERIFIED)) {
             throw new KycNotVerifiedException("User KYC status is not VERIFIED");
         }
@@ -50,6 +51,10 @@ public class AccountService {
                 .balance(BigDecimal.ZERO)
                 .build();
         accountRepository.save(account);
+        return AccountCreateResponse.builder()
+                .accountId(account.getId())
+                .accountNumber(Long.parseLong(BANK_PREFIX+accountNumber))
+                .build();
 
 
     }

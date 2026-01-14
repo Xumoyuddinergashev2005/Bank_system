@@ -47,6 +47,13 @@ public class TransactionService {
     @Transactional
     public TransferResponse transfer(TransferRequest request, User user) {
 
+        Account fromAccount = accountRepository
+                .findByAccountNumberAndDeletedAtIsNull(request.fromAccountNumber())
+                .orElseThrow(() -> new NotFoundException("From account not found"));
+
+        if (user.getId() != fromAccount.getUser().getId()) {
+            throw new UnsupportedOperationException("You are not allowed to perform this operation because this :" +  fromAccount.getAccountNumber() + "  account number is not yours");
+        }
 
         Account toAccount = accountRepository
                 .findByAccountNumberAndDeletedAtIsNull(request.toAccountNumber())
@@ -59,6 +66,7 @@ public class TransactionService {
 
         Transaction transaction = Transaction.builder()
                 .toAccount(toAccount)
+                .fromAccount(fromAccount)
                 .amount(amount)
                 .user(user)
                 .commission(commission)
@@ -84,22 +92,22 @@ public class TransactionService {
     @Transactional
     public void completeTransfer(TransferRequestPermission request, User user) {
 
+        Transaction transaction = transactionRepository.findById(request.transactionId())
+                .orElseThrow(() -> new NotFoundException("Transaction not found"));
 
-        Account fromAccount = accountRepository
-                .findByAccountNumberAndDeletedAtIsNull(request.fromAccountNumber())
-                .orElseThrow(() -> new NotFoundException("From account not found"));
 
-        if (user.getId() != fromAccount.getUser().getId()) {
-            throw new UnsupportedOperationException("You are not allowed to perform this operation because this :" + fromAccount.getAccountNumber() + "  account number is not yours");
+
+
+        if (user.getId() != transaction.getFromAccount().getUser().getId()) {
+            throw new UnsupportedOperationException("You are not allowed to perform this operation because this :" +  transaction.getFromAccount().getAccountNumber() + "  account number is not yours");
         }
 
-        Long cachedCode = redisTemplate.opsForValue().get(fromAccount.getUser().getPhoneNumber());
+        Long cachedCode = redisTemplate.opsForValue().get( transaction.getFromAccount().getUser().getPhoneNumber());
 
         if (cachedCode == null || !cachedCode.equals(request.secretKey())) {
             throw new BadRequestException("Invalid or expired verification code");
         }
-        Transaction transaction = transactionRepository.findById(request.transactionId())
-                .orElseThrow(() -> new NotFoundException("Transaction not found"));
+
 
         if (transaction.getStatus() == TransactionStatus.FAILED || transaction.getStatus() == TransactionStatus.SUCCESS) {
             throw new BadRequestException("This transaction is already completed");
@@ -113,7 +121,7 @@ public class TransactionService {
                 .orElseThrow(() -> new IllegalStateException("Bank account not found"));
 
 
-        String from = String.valueOf(fromAccount.getAccountNumber());
+        String from = String.valueOf( transaction.getFromAccount().getAccountNumber());
         String to = String.valueOf(transaction.getToAccount().getAccountNumber());
 
         if (!from.startsWith("8600") && to.startsWith("8600")) {
@@ -121,12 +129,12 @@ public class TransactionService {
         }
         ;
 
-        if (fromAccount.getBalance().compareTo(transaction.getTotalDebit()) < 0) {
+        if ( transaction.getFromAccount().getBalance().compareTo(transaction.getTotalDebit()) < 0) {
             throw new InsufficientBalanceException("Not enough balance");
         }
 
-        fromAccount.setBalance(
-                fromAccount.getBalance().subtract(transaction.getTotalDebit())
+        transaction.getFromAccount().setBalance(
+                transaction.getFromAccount().getBalance().subtract(transaction.getTotalDebit())
         );
 
         transaction.getToAccount().setBalance(
@@ -137,11 +145,11 @@ public class TransactionService {
                 bankAccount.getBalance().add(transaction.getCommission())
         );
 
-        accountRepository.save(fromAccount);
+        accountRepository.save( transaction.getFromAccount());
         accountRepository.save(transaction.getToAccount());
         accountRepository.save(bankAccount);
 
-        transaction.setFromAccount(fromAccount);
+        transaction.setFromAccount( transaction.getFromAccount());
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setType(TransactionType.INTERNAL_TRANSFER);
         transaction.setCreatedAt(LocalDateTime.now());

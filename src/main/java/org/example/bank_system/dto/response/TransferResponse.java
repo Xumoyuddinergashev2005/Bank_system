@@ -8,15 +8,15 @@ import java.math.BigDecimal;
 
 @Builder
 public record TransferResponse(
-        @JsonProperty("to_account_number_owner_name")
+        @JsonProperty("toAccountNumberOwnerName")
         String toAccountNumberOwnerName,
-        @JsonProperty("total_debit")
+        @JsonProperty("totalDebit")
         BigDecimal totalDebit,
-        @JsonProperty("secret_key")
+        @JsonProperty("secretKey")
         Long secretKey,
         @JsonProperty("status")
         TransactionStatus status,
-        @JsonProperty("transaction_id")
+        @JsonProperty("transactionId")
         Long transactionId
 
 

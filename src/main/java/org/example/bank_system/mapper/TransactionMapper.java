@@ -15,7 +15,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface TransactionMapper {
-    @Mapping(target = "user", source = "user")
+    /*@Mapping(target = "user", source = "user")*/
     @Mapping(target = "toAccountNumber", source = "toAccount.accountNumber")
     @Mapping(target = "fromAccountNumber", source = "fromAccount.accountNumber")
     @Mapping(target = "userId", source = "user.id")

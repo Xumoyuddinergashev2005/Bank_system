@@ -7,9 +7,9 @@ import lombok.Builder;
 public record UserResponse(
         @JsonProperty("id")
         Long id,
-        @JsonProperty("full_name")
+        @JsonProperty("fullName")
         String fullName,
-        @JsonProperty("phone_number")
+        @JsonProperty("phoneNumber")
         String phoneNumber
 
 

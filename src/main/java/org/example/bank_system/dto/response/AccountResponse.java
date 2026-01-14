@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Builder
 public record AccountResponse(
-        @JsonProperty("account_number")
+        @JsonProperty("accountNumber")
         Long accountNumber,
         @JsonProperty("user")
         UserResponse user,
@@ -20,8 +20,8 @@ public record AccountResponse(
         AccountStatus status,
         @JsonProperty("balance")
         BigDecimal balance,
-        @JsonProperty("account_type")
+        @JsonProperty("accountType")
         AccountType type,
-        @JsonProperty("created_at")
+        @JsonProperty("createdAt")
         LocalDateTime createdAt) {
 }

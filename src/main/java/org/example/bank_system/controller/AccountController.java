@@ -4,6 +4,7 @@ package org.example.bank_system.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.bank_system.dto.request.AccountCreateRequest;
+import org.example.bank_system.dto.response.AccountCreateResponse;
 import org.example.bank_system.dto.response.SuccessResponse;
 import org.example.bank_system.entity.account.Account;
 import org.example.bank_system.entity.user.User;
@@ -21,8 +22,8 @@ public class AccountController {
     @PostMapping("/create")
     public ResponseEntity<?> createAccount(@RequestBody @Valid AccountCreateRequest request,
                                            @AuthenticationPrincipal User user) {
-        accountService.createAccount(request,user);
-        return ResponseEntity.ok(SuccessResponse.ok("Account created successfully"));
+       AccountCreateResponse response = accountService.createAccount(request,user);
+        return ResponseEntity.ok(SuccessResponse.ok("Account created successfully with id: "+response.accountId()+" and this your account number: "+response.accountNumber()));
     }
 
     @GetMapping("/all-accounts")

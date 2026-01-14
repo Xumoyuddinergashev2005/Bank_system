@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 
 @Builder
 public record TransactionResponse(
-        @JsonProperty("user")
-        UserResponse user,
-        @JsonProperty("user_id")
+      /*  @JsonProperty("user")
+        UserResponse user,*/
+        @JsonProperty("userId")
         Long userId,
-        @JsonProperty("to_account_number")
+        @JsonProperty("toAccountNumber")
         Long toAccountNumber,
-        @JsonProperty("from_account_number")
+        @JsonProperty("fromAccountNumber")
         Long fromAccountNumber,
         @JsonProperty("status")
         TransactionStatus status,
@@ -24,10 +24,10 @@ public record TransactionResponse(
         TransactionType type,
         @JsonProperty("commission")
         BigDecimal commission,
-        @JsonProperty("total_debit")
+        @JsonProperty("totalDebit")
         BigDecimal totalDebit,
-        @JsonProperty("created_at")
+        @JsonProperty("createdAt")
         LocalDateTime createdAt,
-        @JsonProperty("deleted_at")
+        @JsonProperty("deletedAt")
         LocalDateTime deletedAt) {
 }

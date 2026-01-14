@@ -5,6 +5,7 @@ import org.example.bank_system.dto.request.LoginRequest;
 import org.example.bank_system.dto.request.RegisterRequest;
 import org.example.bank_system.dto.request.VerifyCodeRequest;
 import org.example.bank_system.dto.response.TokenResponse;
+import org.example.bank_system.dto.response.UserProfileResponse;
 import org.example.bank_system.entity.user.KycStatus;
 import org.example.bank_system.entity.user.Role;
 import org.example.bank_system.entity.user.User;
@@ -13,9 +14,11 @@ import org.example.bank_system.exception.BadRequestException;
 import org.example.bank_system.exception.ConflictException;
 import org.example.bank_system.exception.NotFoundException;
 import org.example.bank_system.exception.UnauthorizedException;
+import org.example.bank_system.mapper.UserMapper;
 import org.example.bank_system.repository.UserRepository;
 import org.example.bank_system.util.NumberGenerator;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +33,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper;
     private final PasswordEncoder encoder;
     private final NumberGenerator generator;
     private final JwtService jwtService;
@@ -107,4 +111,21 @@ public class AuthService {
         return new TokenResponse(jwtToken);
     }
 
+    public UserProfileResponse getUserProfile(Long id) {
+       User user= userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found"));
+
+        return UserProfileResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .phoneNumber(user.getPhoneNumber())
+                .role(user.getRole().toString())
+                .status(user.getStatus().toString())
+                .password(user.getPassword())
+                .is_active(user.getIs_active())
+                .kycStatus(user.getKycStatus())
+                .createdAt(user.getCreatedAt())
+                .build();
+
+    }
 }
